@@ -1,113 +1,219 @@
-import Image from "next/image";
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import confetti from 'canvas-confetti'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-export default function Home() {
+const preguntas = [
+  {
+    pregunta: "¿Cuántos días a la semana asistes correctamente uniformado a la institución educativa?",
+    opciones: ["1 vez", "2 veces", "3 veces", "4 o más veces"],
+    emoji: "👕"
+  },
+  {
+    pregunta: "¿Por qué razón los estudiantes llegan tarde a clases después del recreo?",
+    opciones: ["Van al baño a última hora", "Se quedan en el kiosco", "Se quedan jugando con el balón", "No escuchan el timbre"],
+    emoji: "⏰"
+  },
+  {
+    pregunta: "¿Cuántas veces a la semana llegas tarde a la institución educativa?",
+    opciones: ["1 vez", "2 veces", "3 veces", "Todos los días"],
+    emoji: "🏃"
+  },
+  {
+    pregunta: "El día que llegaste tarde a la institución educativa, ¿cuántos minutos de tardanza tuviste?",
+    opciones: ["Menos de 5 min", "De 5 a 10 min", "De 10 a 15 min", "Más de 15 min"],
+    emoji: "⌛"
+  },
+  {
+    pregunta: "¿En qué medida cumples con las normas de convivencia establecidas en la hora de clase?",
+    opciones: ["Siempre", "Casi siempre", "Nunca", "Casi nunca"],
+    emoji: "📏"
+  },
+  {
+    pregunta: "¿Por qué crees que los estudiantes asisten a la institución educativa con el cabello desalineado?",
+    opciones: ["No tienen tiempo de arreglarse", "No respetan las normas de presentación escolar", "Es una moda venir sin arreglarse", "Quieren dar la contra a las autoridades de la I.E."],
+    emoji: "💇"
+  },
+  {
+    pregunta: "¿A qué se debe el bajo rendimiento académico en nuestra Institución Educativa?",
+    opciones: ["No estudiamos o practicamos", "Desinterés", "Trabajo", "Falta de tiempo"],
+    emoji: "📚"
+  },
+  {
+    pregunta: "¿Por qué motivo los estudiantes llevan celulares a la Institución Educativa?",
+    opciones: ["Contactarme con mis compañeros", "Herramienta de estudio", "Chatear", "Me obligan mis padres"],
+    emoji: "📱"
+  },
+  {
+    pregunta: "¿A qué se debe que la gran mayoría de los estudiantes carezcan de presentación personal?",
+    opciones: ["Falta de tiempo", "Está de moda", "Baja autoestima", "Para estar a la par de mis compañeros"],
+    emoji: "🪞"
+  },
+  {
+    pregunta: "¿De qué manera podríamos mantener nuestra aula limpia, ordenada y ambientada?",
+    opciones: ["Todos colaboramos", "El comité de aula", "El personal de limpieza", "Nos turnamos"],
+    emoji: "🧹"
+  }
+]
+
+export default function Component() {
+  const [respuestas, setRespuestas] = useState(Array(10).fill(''))
+  const [resultados, setResultados] = useState(Array(10).fill(Array(4).fill(0)))
+  const [totalRespuestas, setTotalRespuestas] = useState(0)
+  const [encuestaCompletada, setEncuestaCompletada] = useState(false)
+  const [error, setError] = useState('')
+  const [yaRespondio, setYaRespondio] = useState(false)
+
+  useEffect(() => {
+    const storedResultados = localStorage.getItem('resultadosEncuesta')
+    const storedTotalRespuestas = localStorage.getItem('totalRespuestasEncuesta')
+    const storedYaRespondio = localStorage.getItem('yaRespondioEncuesta')
+    
+    if (storedResultados) setResultados(JSON.parse(storedResultados))
+    if (storedTotalRespuestas) setTotalRespuestas(parseInt(storedTotalRespuestas))
+    if (storedYaRespondio) setYaRespondio(JSON.parse(storedYaRespondio))
+  }, [])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (yaRespondio) {
+      setError('Ya has respondido a esta encuesta. ¡Gracias por tu participación!')
+      return
+    }
+    if (totalRespuestas >= 100) {
+      setError('Lo sentimos, ya se han alcanzado las 100 respuestas máximas.')
+      return
+    }
+    if (respuestas.some(r => r === '')) {
+      setError('¡Hey! Falta responder algunas preguntas. ¡Échales un vistazo!')
+      return
+    }
+    const nuevosResultados = resultados.map((pregunta, i) => 
+      pregunta.map((opcion, j) => respuestas[i] === preguntas[i].opciones[j] ? opcion + 1 : opcion)
+    )
+    setResultados(nuevosResultados)
+    setTotalRespuestas(prev => prev + 1)
+    setEncuestaCompletada(true)
+    setYaRespondio(true)
+    localStorage.setItem('resultadosEncuesta', JSON.stringify(nuevosResultados))
+    localStorage.setItem('totalRespuestasEncuesta', (totalRespuestas + 1).toString())
+    localStorage.setItem('yaRespondioEncuesta', 'true')
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    })
+  }
+
+  if (yaRespondio || encuestaCompletada || totalRespuestas >= 100) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto mt-8 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+        <CardHeader>
+          <CardTitle className="text-4xl font-bold text-center">¡Gracias por participar! 🎉</CardTitle>
+          <CardDescription className="text-center text-xl">
+            Total de respuestas: {totalRespuestas} / 100
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {preguntas.map((pregunta, i) => (
+            <motion.div 
+              key={i} 
+              className="mb-6 p-4 bg-white rounded-lg shadow-lg text-black"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
+              <h3 className="text-2xl font-semibold mb-2 flex items-center text-indigo-700">
+                <span className="text-4xl mr-2">{pregunta.emoji}</span>
+                <span>{pregunta.pregunta}</span>
+              </h3>
+              {pregunta.opciones.map((opcion, j) => (
+                <div key={j} className="flex items-center justify-between mb-2">
+                  <span className="text-indigo-600 font-medium">{opcion}</span>
+                  <div className="w-2/3 bg-gray-200 rounded-full h-6">
+                    <motion.div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-6 rounded-full"
+                      style={{ width: `${(resultados[i][j] / totalRespuestas) * 100}%` }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(resultados[i][j] / totalRespuestas) * 100}%` }}
+                      transition={{ duration: 1, delay: i * 0.1 + j * 0.05 }}
+                    >
+                      <span className="px-2 text-white font-bold">{resultados[i][j]}</span>
+                    </motion.div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          ))}
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Card className="w-full max-w-4xl mx-auto mt-8 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+      <CardHeader>
+        <CardTitle className="text-4xl font-bold text-center">¡Tu opinión es importante! 🌟</CardTitle>
+        <CardDescription className="text-center text-xl">
+          Faltan {100 - totalRespuestas} respuestas. ¡Sé parte del cambio!
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4 bg-red-500 text-white">
+            <AlertTitle>¡Ojo! 👀</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <form onSubmit={handleSubmit}>
+          {preguntas.map((pregunta, i) => (
+            <motion.div 
+              key={i} 
+              className={`mb-6 p-4 bg-white rounded-lg shadow-lg ${respuestas[i] === '' && error ? 'border-4 border-red-500' : ''}`}
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
+              <Label className="text-2xl font-semibold mb-2 flex items-center text-indigo-700">
+                <span className="text-4xl mr-2">{pregunta.emoji}</span>
+                <span>{pregunta.pregunta}</span>
+              </Label>
+              <RadioGroup
+                onValueChange={(value) => {
+                  const nuevasRespuestas = [...respuestas]
+                  nuevasRespuestas[i] = value
+                  setRespuestas(nuevasRespuestas)
+                  setError('')
+                }}
+                className="mt-2 grid grid-cols-2 gap-2"
+              >
+                {pregunta.opciones.map((opcion, j) => (
+                  <div key={j} className="flex items-center space-x-2 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 transition-colors">
+                    <RadioGroupItem value={opcion} id={`p${i}o${j}`} />
+                    <Label htmlFor={`p${i}o${j}`} className="text-indigo-600 font-medium cursor-pointer w-full">{opcion}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </motion.div>
+          ))}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-pink-600 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-full text-xl shadow-lg transform transition-all duration-500 ease-in-out hover:shadow-2xl"
+              disabled={respuestas.some(r => r === '') || yaRespondio}
+            >
+              ¡Enviar mis respuestas! 🚀
+            </Button>
+          </motion.div>
+        </form>
+      </CardContent>
+    </Card>
+  )
 }
